@@ -151,10 +151,34 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 
 // TODO: Fix for support PKCE & Public Clients
 func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *AccessRequest {
-	// get client authentication
-	auth := s.getClientAuth(w, r, s.Config.AllowClientSecretInParams)
-	if auth == nil {
+	// mush have client_id
+	if clientID := r.FormValue("client_id"); clientID == "" {
+		// TODO: fix return error
+		s.setErrorAndLog(w, E_INVALID_REQUEST, nil, "access_request=%s", "client_id is required")
 		return nil
+	}
+
+	// get client from client_id
+	client, err := w.Storage.GetClient(r.FormValue("client_id"))
+	if err != nil {
+		// TODO: fix return error
+		s.setErrorAndLog(w, E_SERVER_ERROR, err, "access_request=%s", "getting client")
+		return nil
+	}
+
+	// check client is confidential or public
+	isPublicClient := CheckClientSecret(client, "")
+	isConfidentialClient := !isPublicClient
+
+	// declare auth
+	var auth *BasicAuth
+
+	if isConfidentialClient {
+		// get client authentication
+		auth = s.getClientAuth(w, r, s.Config.AllowClientSecretInParams)
+		if auth == nil {
+			return nil
+		}
 	}
 
 	// generate access token
@@ -174,13 +198,19 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 		return nil
 	}
 
-	// must have a valid client
-	if ret.Client = s.getClient(auth, w.Storage, w); ret.Client == nil {
-		return nil
+	if isPublicClient {
+		// because no BasicAuth
+		ret.Client = client
+	} else {
+		// must have a valid client
+		// confidential client
+		if ret.Client = s.getClient(auth, w.Storage, w); ret.Client == nil {
+			return nil
+		}
 	}
 
 	// must be a valid authorization code
-	var err error
+	//var err error
 	ret.AuthorizeData, err = w.Storage.LoadAuthorize(ret.Code)
 	if err != nil {
 		s.setErrorAndLog(w, E_INVALID_GRANT, err, "auth_code_request=%s", "error loading authorize data")
