@@ -13,6 +13,9 @@ type Client interface {
 	// Base client uri
 	GetRedirectUri() string
 
+	// Is the Public client
+	IsPublic() bool
+
 	// Data to be passed to storage. Not used by the library.
 	GetUserData() interface{}
 }
@@ -30,6 +33,7 @@ type DefaultClient struct {
 	Id          string
 	Secret      string
 	RedirectUri string
+	Public      bool
 	UserData    interface{}
 }
 
@@ -45,6 +49,10 @@ func (d *DefaultClient) GetRedirectUri() string {
 	return d.RedirectUri
 }
 
+func (d *DefaultClient) IsPublic() bool {
+	return d.Public
+}
+
 func (d *DefaultClient) GetUserData() interface{} {
 	return d.UserData
 }
@@ -58,5 +66,6 @@ func (d *DefaultClient) CopyFrom(client Client) {
 	d.Id = client.GetId()
 	d.Secret = client.GetSecret()
 	d.RedirectUri = client.GetRedirectUri()
+	d.Public = client.IsPublic()
 	d.UserData = client.GetUserData()
 }
