@@ -149,6 +149,7 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 	return nil
 }
 
+// TODO: Fix for support PKCE & Public Clients
 func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *AccessRequest {
 	// get client authentication
 	auth := s.getClientAuth(w, r, s.Config.AllowClientSecretInParams)
