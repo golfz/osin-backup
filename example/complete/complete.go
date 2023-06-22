@@ -111,7 +111,7 @@ func main() {
 		defer w.Write([]byte("</body></html>"))
 
 		if code == "" {
-			w.Write([]byte("Nothing to do (...)"))
+			w.Write([]byte("Nothing to do"))
 			return
 		}
 
