@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/openshift/osin"
-	"github.com/openshift/osin/example"
+	"github.com/golfz/osin"
+	"github.com/golfz/osin/example"
 	"golang.org/x/oauth2"
 )
 

@@ -6,8 +6,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/openshift/osin"
-	"github.com/openshift/osin/example"
+	"github.com/golfz/osin"
+	"github.com/golfz/osin/example"
 	"github.com/openshift/osincli"
 	"net/http"
 )
