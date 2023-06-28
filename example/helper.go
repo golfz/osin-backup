@@ -11,7 +11,7 @@ import (
 
 func HandleLoginPage(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.Request) bool {
 	r.ParseForm()
-	if r.Method == "POST" && r.FormValue("login") == "test" && r.FormValue("password") == "test" {
+	if r.Method == "POST" && r.FormValue("user") == "test" && r.FormValue("password") == "test" {
 		return true
 	}
 
@@ -20,7 +20,7 @@ func HandleLoginPage(ar *osin.AuthorizeRequest, w http.ResponseWriter, r *http.R
 	w.Write([]byte(fmt.Sprintf("LOGIN %s (use test/test)<br/>", ar.Client.GetId())))
 	w.Write([]byte(fmt.Sprintf("<form action=\"/authorize?%s\" method=\"POST\">", r.URL.RawQuery)))
 
-	w.Write([]byte("Login: <input type=\"text\" name=\"login\" /><br/>"))
+	w.Write([]byte("Login: <input type=\"text\" name=\"user\" /><br/>"))
 	w.Write([]byte("Password: <input type=\"password\" name=\"password\" /><br/>"))
 	w.Write([]byte("<input type=\"submit\"/>"))
 
