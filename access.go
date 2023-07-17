@@ -151,34 +151,61 @@ func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessReques
 
 // TODO: Fix for support PKCE & Public Clients
 func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *AccessRequest {
-	// mush have client_id
+	// @golfz remove this:
+	// because getClientAuth() always require client authentication, even if client is public
+	// getClientAuth() should be called only if client is confidential
+	//
+	//auth := s.getClientAuth(w, r, s.Config.AllowClientSecretInParams)
+	//if auth == nil {
+	//	return nil
+	//}
+
+	// @golfz add this:
+	// every "Authorization Code" request must have client_id
+	// so, if client_id is empty, return error
 	if clientID := r.FormValue("client_id"); clientID == "" {
 		// TODO: fix return error
-		s.setErrorAndLog(w, E_INVALID_REQUEST, nil, "access_request=%s", "client_id is required")
+		s.setErrorAndLog(w, E_INVALID_REQUEST, nil, "auth_code_request=%s", "client_id is required")
 		return nil
 	}
 
+	// @golfz add this:
 	// get client from client_id
 	client, err := w.Storage.GetClient(r.FormValue("client_id"))
 	if err != nil {
 		// TODO: fix return error
-		s.setErrorAndLog(w, E_SERVER_ERROR, err, "access_request=%s", "getting client")
+		s.setErrorAndLog(w, E_SERVER_ERROR, err, "auth_code_request=%s", "cannot get client from client_id")
 		return nil
 	}
 
+	// @golfz add this:
 	// check client is confidential or public
+	// if client is public, client_secret must be empty, (from osin spec)
+	// so, if client_secret is not empty, the client is confidential
 	isPublicClient := CheckClientSecret(client, "")
 	isConfidentialClient := !isPublicClient
 
+	// @golfz add this:
 	// declare auth
 	var auth *BasicAuth
 
+	// @golfz add this:
+	// if client is confidential, get client authentication
+	// because client is confidential, client_secret must be not empty
 	if isConfidentialClient {
-		// get client authentication
+		// moved from the top
+		// start: get client authentication
+		// --------------------------------
+		// getClientAuth() return *BasicAuth that contains: client_id, client_secret
+		// form params (if AllowClientSecretInParams=true)
+		// or from BasicAuth Authorization header
+		// client_id and client_secret can be empty string, with no error
+		// we will check client_id and client_secret later
 		auth = s.getClientAuth(w, r, s.Config.AllowClientSecretInParams)
 		if auth == nil {
 			return nil
 		}
+		// end: get client authentication
 	}
 
 	// generate access token
@@ -198,19 +225,27 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 		return nil
 	}
 
+	// @golfz add this:
+	// set client
 	if isPublicClient {
+		// [Public Client]
 		// because no BasicAuth
+		// use client from storage
 		ret.Client = client
 	} else {
-		// must have a valid client
-		// confidential client
+		// [Confidential Client]
+		// get client from BasicAuth
+		// s.getClient() will check client_id and client_secret
+		// if client_id or client_secret is empty, return error
+		// if client_id or client_secret is match, return client from storage
 		if ret.Client = s.getClient(auth, w.Storage, w); ret.Client == nil {
 			return nil
 		}
 	}
 
+	//var err error // @golfz remove this line because err is already declared
+
 	// must be a valid authorization code
-	//var err error
 	ret.AuthorizeData, err = w.Storage.LoadAuthorize(ret.Code)
 	if err != nil {
 		s.setErrorAndLog(w, E_INVALID_GRANT, err, "auth_code_request=%s", "error loading authorize data")
