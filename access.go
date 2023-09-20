@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"errors"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -112,6 +113,8 @@ type AccessTokenGen interface {
 
 // HandleAccessRequest is the http.HandlerFunc for handling access token requests
 func (s *Server) HandleAccessRequest(w *Response, r *http.Request) *AccessRequest {
+	log.Println("HandleAccessRequest")
+
 	// Only allow GET or POST
 	if r.Method == "GET" {
 		if !s.Config.AllowGetAccessRequest {
@@ -174,7 +177,7 @@ func (s *Server) handleAuthorizationCodeRequest(w *Response, r *http.Request) *A
 	client, err := w.Storage.GetClient(r.FormValue("client_id"))
 	if err != nil {
 		// TODO: fix return error
-		s.setErrorAndLog(w, E_SERVER_ERROR, err, "auth_code_request=%s", "cannot get client from client_id")
+		s.setErrorAndLog(w, E_INVALID_CLIENT, err, "auth_code_request=%s", "cannot get client from client_id")
 		return nil
 	}
 
@@ -518,6 +521,7 @@ func (s *Server) handleAssertionRequest(w *Response, r *http.Request) *AccessReq
 }
 
 func (s *Server) FinishAccessRequest(w *Response, r *http.Request, ar *AccessRequest) {
+	log.Println("FinishAccessRequest")
 	// don't process if is already an error
 	if w.IsError {
 		return
