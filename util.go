@@ -105,6 +105,14 @@ func (s Server) getClientAuth(w *Response, r *http.Request, allowQueryParams boo
 			if auth.Username != "" {
 				return auth
 			}
+		} else if _, hasClientID := r.Form["client_id"]; hasClientID { // TODO: GolFz test: added this for public clients
+			auth := &BasicAuth{
+				Username: r.FormValue("client_id"),
+				Password: "",
+			}
+			if auth.Username != "" {
+				return auth
+			}
 		}
 	}
 

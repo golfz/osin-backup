@@ -352,6 +352,7 @@ func extraScopes(access_scopes, refresh_scopes string) bool {
 	return false
 }
 
+// TODO: GolFz: Fix for support PKCE & Public Clients
 func (s *Server) handleRefreshTokenRequest(w *Response, r *http.Request) *AccessRequest {
 	// get client authentication
 	auth := s.getClientAuth(w, r, s.Config.AllowClientSecretInParams)
